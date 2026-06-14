@@ -1,0 +1,195 @@
+{% extends 'core/base.html' %}
+{% block title %}Absents{% endblock %}
+{% block topbar_title %}Gestion des absents{% endblock %}
+
+{% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="p-6 max-w-6xl mx-auto space-y-6 text-gray-800 antialiased">
+
+  <!-- Filtres -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="p-5 border-b border-gray-100 bg-gray-50/50">
+      <h3 class="font-bold text-gray-900 text-xl">Candidats absents</h3>
+      <p class="text-xs text-gray-500 mt-0.5">Filtrez et reprogrammez les candidats absents à un examen.</p>
+    </div>
+
+    <form method="get" class="p-5 border-b border-gray-100">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gray-600">Nom ou prénom</label>
+          <input type="text" name="nom" value="{{ nom }}" placeholder="Rechercher..."
+                 class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors">
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gray-600">Type d'examen</label>
+          <select name="type_examen" class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500 transition-colors">
+            <option value="">Code et conduite</option>
+            <option value="code" {% if type_examen == 'code' %}selected{% endif %}>Code uniquement</option>
+            <option value="conduite" {% if type_examen == 'conduite' %}selected{% endif %}>Conduite uniquement</option>
+          </select>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gray-600">Auto-école</label>
+          <select name="auto_ecole" class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500 transition-colors">
+            <option value="">Toutes</option>
+            {% for ae in auto_ecoles %}
+              <option value="{{ ae.id }}" {% if auto_ecole == ae.id|stringformat:"s" %}selected{% endif %}>{{ ae.nom }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-gray-600">Catégorie</label>
+          <select name="categorie" class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500 transition-colors">
+            <option value="">Toutes</option>
+            {% for val, label in categories %}
+              <option value="{{ val }}" {% if categorie == val %}selected{% endif %}>Cat. {{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="flex flex-col gap-1.5 justify-end">
+          <div class="flex gap-2">
+            <button type="submit" class="flex-1 text-sm font-semibold px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition shadow-sm">Filtrer</button>
+            <a href="{% url 'liste_absents' %}" class="text-sm font-medium px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition">Effacer</a>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <!-- Absents Code -->
+    {% if type_examen != 'conduite' %}
+    <div class="border-b border-gray-100">
+      <div class="px-5 py-3 bg-orange-50 border-b border-orange-100 flex items-center gap-2">
+        <span class="text-xs font-bold text-orange-700 uppercase tracking-wide">Examen Code</span>
+        <span class="text-xs text-orange-500">{{ absents_code|length }} absent(s)</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+              <th class="px-5 py-3 text-left font-semibold">N° Dossier</th>
+              <th class="px-5 py-3 text-left font-semibold">Candidat</th>
+              <th class="px-5 py-3 text-left font-semibold">Cat.</th>
+              <th class="px-5 py-3 text-left font-semibold">Auto-école</th>
+              <th class="px-5 py-3 text-left font-semibold">Date absence</th>
+              <th class="px-5 py-3 text-right font-semibold"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for e in absents_code %}
+            <tr class="hover:bg-gray-50/60 transition-colors">
+              <td class="px-5 py-3 font-mono font-semibold">{{ e.candidat.numero_dossier }}</td>
+              <td class="px-5 py-3 font-medium">{{ e.candidat.nom }} {{ e.candidat.prenom }}</td>
+              <td class="px-5 py-3"><span class="inline-block px-2 py-0.5 bg-gray-100 text-gray-700 text-xs font-semibold rounded">{{ e.candidat.categorie }}</span></td>
+              <td class="px-5 py-3 text-gray-500 text-xs">{{ e.candidat.auto_ecole.nom }}</td>
+              <td class="px-5 py-3 text-gray-500">{{ e.date_examen|date:"d/m/Y" }}</td>
+              <td class="px-5 py-3 text-right">
+                <button onclick="ouvrirModal({{ e.pk }}, 'code', '{{ e.candidat.nom }} {{ e.candidat.prenom }}')"
+                        class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-gray-900 text-white rounded-xl hover:bg-gray-700 transition">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  Programmer
+                </button>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="px-5 py-10 text-center text-gray-400">Aucun absent au code.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Absents Conduite -->
+    {% if type_examen != 'code' %}
+    <div>
+      <div class="px-5 py-3 bg-orange-50 border-b border-orange-100 flex items-center gap-2">
+        <span class="text-xs font-bold text-orange-700 uppercase tracking-wide">Examen Conduite</span>
+        <span class="text-xs text-orange-500">{{ absents_conduite|length }} absent(s)</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+              <th class="px-5 py-3 text-left font-semibold">N° Dossier</th>
+              <th class="px-5 py-3 text-left font-semibold">Candidat</th>
+              <th class="px-5 py-3 text-left font-semibold">Cat.</th>
+              <th class="px-5 py-3 text-left font-semibold">Auto-école</th>
+              <th class="px-5 py-3 text-left font-semibold">Date absence</th>
+              <th class="px-5 py-3 text-right font-semibold"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for e in absents_conduite %}
+            <tr class="hover:bg-gray-50/60 transition-colors">
+              <td class="px-5 py-3 font-mono font-semibold">{{ e.candidat.numero_dossier }}</td>
+              <td class="px-5 py-3 font-medium">{{ e.candidat.nom }} {{ e.candidat.prenom }}</td>
+              <td class="px-5 py-3"><span class="inline-block px-2 py-0.5 bg-gray-100 text-gray-700 text-xs font-semibold rounded">{{ e.candidat.categorie }}</span></td>
+              <td class="px-5 py-3 text-gray-500 text-xs">{{ e.candidat.auto_ecole.nom }}</td>
+              <td class="px-5 py-3 text-gray-500">{{ e.date_examen|date:"d/m/Y" }}</td>
+              <td class="px-5 py-3 text-right">
+                <button onclick="ouvrirModal({{ e.pk }}, 'conduite', '{{ e.candidat.nom }} {{ e.candidat.prenom }}')"
+                        class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-gray-900 text-white rounded-xl hover:bg-gray-700 transition">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  Programmer
+                </button>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="px-5 py-10 text-center text-gray-400">Aucun absent à la conduite.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<!-- Modal programmation -->
+<div id="modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50" style="display:none;">
+  <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4">
+    <h3 class="font-bold text-gray-900 text-lg mb-1">Programmer l'examen</h3>
+    <p class="text-sm text-gray-500 mb-4" id="modal-nom"></p>
+    <form method="post" id="modal-form">
+      {% csrf_token %}
+      <div class="mb-4">
+        <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Nouvelle date</label>
+        <input type="date" name="nouvelle_date" id="modal-date" required
+               class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors">
+        <p class="text-xs text-gray-400 mt-1">J+1 ouvré minimum (tout jour si absent)</p>
+      </div>
+      <div class="flex gap-2">
+        <button type="submit" class="flex-1 text-sm font-semibold px-4 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-700 transition">Confirmer</button>
+        <button type="button" onclick="fermerModal()" class="text-sm font-medium px-4 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition">Annuler</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function ouvrirModal(pk, typeExamen, nomCandidat) {
+  document.getElementById('modal-nom').textContent = nomCandidat + ' — Examen ' + typeExamen;
+  document.getElementById('modal-form').action = `/absents/${pk}/${typeExamen}/programmer/`;
+  // Date min = demain
+  const demain = new Date();
+  demain.setDate(demain.getDate() + 1);
+  document.getElementById('modal-date').min = demain.toISOString().split('T')[0];
+  document.getElementById('modal-date').value = demain.toISOString().split('T')[0];
+  document.getElementById('modal').style.display = 'flex';
+}
+function fermerModal() {
+  document.getElementById('modal').style.display = 'none';
+}
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) fermerModal();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'core/base.html' %}
+{% block title %}Saisie résultat conduite{% endblock %}
+{% block topbar_title %}Saisie résultat — Conduite{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{% url 'examens_conduite_jour' %}">Examens</a>
+  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+  <span>Saisie résultat conduite</span>
+</div>
+<div style="max-width:480px;">
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title" style="margin-bottom:12px;">Candidat</div>
+    <div style="font-size:18px;font-weight:700;">{{ examen.candidat.nom }} {{ examen.candidat.prenom }}</div>
+    <div style="font-size:12px;color:#999;margin-top:2px;">
+      {{ examen.candidat.numero_dossier }} · Cat. {{ examen.candidat.categorie }} · {{ examen.candidat.auto_ecole.nom }}
+    </div>
+    <div style="margin-top:8px;font-size:12px;color:#666;">
+      Date examen : <strong>{{ examen.date_examen|date:"d/m/Y" }}</strong>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title" style="margin-bottom:16px;">Résultat examen conduite</div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Note obtenue (sur 25)</label>
+        <input type="number" name="note" id="note-input" min="0" max="25" placeholder="Ex : 20"
+               style="font-size:24px;font-weight:700;text-align:center;padding:12px;">
+        <p style="font-size:11px;color:#999;margin-top:4px;">
+          Note &ge; 18 = APTE &nbsp;|&nbsp; Note &lt; 18 = INAPTE
+        </p>
+      </div>
+      <hr class="divider">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
+        <input type="checkbox" id="absent" name="absent" value="1" style="width:16px;height:16px;">
+        <label for="absent" style="text-transform:none;font-size:13px;font-weight:500;margin:0;cursor:pointer;">
+          Candidat absent
+        </label>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button type="submit" class="btn btn-primary">Enregistrer le résultat</button>
+        <a href="{% url 'examens_conduite_jour' %}" class="btn btn-secondary">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('absent').addEventListener('change', function() {
+  document.getElementById('note-input').disabled = this.checked;
+  if (this.checked) document.getElementById('note-input').value = '';
+});
+</script>
+{% endblock %}

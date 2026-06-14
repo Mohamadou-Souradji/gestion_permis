@@ -1,0 +1,178 @@
+{% extends 'core/base.html' %}
+{% block title %}Nouveau dossier{% endblock %}
+{% block topbar_title %}Nouveau dossier candidat{% endblock %}
+
+{% block content %}
+<!-- CDN Tailwind CSS pour la cohérence de l'interface -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="p-6 max-w-4xl mx-auto space-y-6 text-gray-800 antialiased">
+  
+  <!-- Breadcrumb (Fil d'Ariane) -->
+  <nav class="flex items-center gap-2 text-sm font-medium text-gray-500">
+    <a href="{% url 'liste_candidats' %}" class="hover:text-blue-600 transition-colors">Candidats</a>
+    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+      <polyline points="9 18 15 12 9 6"/>
+    </svg>
+    <span class="text-gray-900 font-semibold">Nouveau dossier</span>
+  </nav>
+
+  <!-- Form Card -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    
+    <!-- Header -->
+    <div class="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <div>
+        <h3 class="font-bold text-gray-900 text-xl">Saisie du dossier candidat</h3>
+        <p class="text-xs text-gray-500 mt-0.5">Le N° de dossier sera généré automatiquement à la validation.</p>
+      </div>
+      <span class="text-xs font-semibold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md self-start sm:self-auto">
+        Champs requis *
+      </span>
+    </div>
+
+    <!-- Formulaire -->
+    <form method="post" class="p-6 space-y-8">
+      {% csrf_token %}
+
+      <!-- Section 1 : Identité -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 pb-2 border-b border-gray-100">
+          <div class="w-1 h-4 bg-blue-600 rounded-full"></div>
+          <h4 class="text-xs font-bold tracking-wider uppercase text-gray-400">Identité</h4>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gray-600">Nom *</label>
+            <input type="text" name="nom" required placeholder="NOM (majuscules)" class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors">
+          </div>
+          
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gray-600">Prénom *</label>
+            <input type="text" name="prenom" required placeholder="Prénom" class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors">
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gray-600">Date de naissance *</label>
+            <input type="date" name="date_naissance" required class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors">
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gray-600">Lieu de naissance *</label>
+            <input type="text" name="lieu_naissance" required placeholder="Ville ou village" class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors">
+          </div>
+
+          <div class="flex flex-col gap-1.5 relative">
+            <label class="text-xs font-semibold text-gray-600">Sexe *</label>
+            <select name="sexe" required class="w-full pl-3.5 pr-10 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors appearance-none cursor-pointer">
+              <option value="">-- Sélectionner --</option>
+              {% for val, label in sexes %}
+                <option value="{{ val }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+            <div class="absolute inset-y-0 right-0 pr-3 pt-5 flex items-center pointer-events-none text-gray-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-gray-600">Téléphone</label>
+            <input type="tel" name="telephone" placeholder="Ex : 90 00 00 00" class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2 : Affectation Dossier -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 pb-2 border-b border-gray-100">
+          <div class="w-1 h-4 bg-blue-600 rounded-full"></div>
+          <h4 class="text-xs font-bold tracking-wider uppercase text-gray-400">Dossier d'inscription</h4>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <!-- Recherche Auto-école complexe -->
+          <div class="flex flex-col gap-1.5 relative">
+            <label class="text-xs font-semibold text-gray-600">Auto-école *</label>
+            <input type="text" id="ae-search" placeholder="Tapez pour rechercher..." autocomplete="off" class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors">
+            <input type="hidden" name="auto_ecole" id="ae-id" required>
+            
+            <!-- Liste d'autocomplétion stylisée -->
+            <div id="ae-list" class="absolute left-0 right-0 top-[66px] z-20 max-h-52 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-lg mt-1 hidden divide-y divide-gray-50"></div>
+          </div>
+
+          <div class="flex flex-col gap-1.5 relative">
+            <label class="text-xs font-semibold text-gray-600">Catégorie de permis *</label>
+            <select name="categorie" required class="w-full pl-3.5 pr-10 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors appearance-none cursor-pointer">
+              <option value="">-- Sélectionner --</option>
+              {% for val, label in categories %}
+                <option value="{{ val }}">Catégorie {{ label }}</option>
+              {% endfor %}
+            </select>
+            <div class="absolute inset-y-0 right-0 pr-3 pt-5 flex items-center pointer-events-none text-gray-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions de bas de page -->
+      <div class="pt-4 border-t border-gray-100 flex flex-col sm:flex-row-reverse sm:items-center gap-3">
+        <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-sm font-semibold px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Créer le dossier et programmer l'examen
+        </button>
+        <a href="{% url 'liste_candidats' %}" class="w-full sm:w-auto inline-flex items-center justify-center text-sm font-medium px-5 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition shadow-sm">
+          Annuler
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const searchEl = document.getElementById('ae-search');
+const idEl = document.getElementById('ae-id');
+const listEl = document.getElementById('ae-list');
+
+searchEl.addEventListener('input', async () => {
+  const q = searchEl.value.trim();
+  if (q.length < 2) { 
+    listEl.classList.add('hidden'); 
+    return; 
+  }
+  
+  const res = await fetch(`/api/auto-ecoles/autocomplete/?q=${encodeURIComponent(q)}`);
+  const data = await res.json();
+  listEl.innerHTML = '';
+  
+  if (!data.length) { 
+    listEl.classList.add('hidden'); 
+    return; 
+  }
+  
+  data.forEach(ae => {
+    const d = document.createElement('div');
+    // Injection des classes Tailwind pour moderniser les items de la liste
+    d.className = 'p-3 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors';
+    d.textContent = ae.nom;
+    d.addEventListener('click', () => {
+      searchEl.value = ae.nom;
+      idEl.value = ae.id;
+      listEl.classList.add('hidden');
+    });
+    listEl.appendChild(d);
+  });
+  listEl.classList.remove('hidden');
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#ae-search') && !e.target.closest('#ae-list'))
+    listEl.classList.add('hidden');
+});
+</script>
+{% endblock %}

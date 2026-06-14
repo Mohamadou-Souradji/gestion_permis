@@ -1,0 +1,157 @@
+{% extends 'core/base.html' %}
+{% block title %}Candidats{% endblock %}
+{% block topbar_title %}Gestion des candidats{% endblock %}
+
+{% block content %}
+<!-- CDN Tailwind CSS pour l'uniformité visuelle -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="p-6 max-w-7xl mx-auto space-y-6 text-gray-800 antialiased">
+  
+  <!-- Conteneur Principal (Style Bento Box) -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+    
+    <!-- Header de la carte -->
+    <div class="p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-gray-50/50">
+      <div>
+        <h3 class="font-bold text-gray-900 text-xl">Liste des candidats</h3>
+        <p class="text-xs text-gray-500 mt-0.5">Consultez, filtrez et gérez les dossiers d'inscription.</p>
+      </div>
+      <a href="{% url 'creer_candidat' %}" class="inline-flex items-center justify-center gap-2 text-sm font-semibold px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition shadow-sm self-start sm:self-auto">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Nouveau dossier
+      </a>
+    </div>
+
+    <!-- Barre de Recherche et Filtres -->
+    <form method="get" class="p-5 border-b border-gray-100 bg-white flex flex-col md:flex-row gap-3 items-stretch md:items-center">
+      
+      <!-- Input de recherche avec icône intégrée -->
+      <div class="relative flex-1">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </div>
+        <input 
+          type="text" 
+          name="q" 
+          value="{{ q }}" 
+          placeholder="Nom, prénom, N° dossier, CNI..."
+          class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+        >
+      </div>
+
+      <!-- Sélecteur Catégorie -->
+      <div class="relative">
+        <select 
+          name="categorie" 
+          class="w-full md:w-48 pl-3 pr-8 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors appearance-none cursor-pointer"
+        >
+          <option value="">Toutes catégories</option>
+          {% for val, label in categories %}
+            <option value="{{ val }}" {% if categorie == val %}selected{% endif %}>Cat. {{ label }}</option>
+          {% endfor %}
+        </select>
+        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        </div>
+      </div>
+
+      <!-- Actions de filtrage -->
+      <div class="flex items-center gap-2">
+        <button type="submit" class="flex-1 md:flex-none inline-flex items-center justify-center font-semibold text-xs px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition shadow-sm h-[38px]">
+          Filtrer
+        </button>
+        {% if q or categorie %}
+          <a href="{% url 'liste_candidats' %}" class="flex-1 md:flex-none inline-flex items-center justify-center font-semibold text-xs px-4 py-2 bg-gray-100 text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-200 transition h-[38px]">
+            Effacer
+          </a>
+        {% endif %}
+      </div>
+    </form>
+
+    <!-- Wrap du Tableau (Scroll horizontal fluide sur mobile) -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-gray-50/50">
+            <th class="p-4 text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100">N° Dossier</th>
+            <th class="p-4 text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100">Nom et Prénom</th>
+            <th class="p-4 text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100">Catégorie</th>
+            <th class="p-4 text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100">Auto-école</th>
+            <th class="p-4 text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100">Inscription</th>
+            <th class="p-4 text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100">Statut</th>
+            <th class="p-4 border-b border-gray-100 text-right"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for c in candidats %}
+          <tr class="hover:bg-gray-50/60 transition-colors">
+            <!-- N° Dossier -->
+            <td class="p-4 whitespace-nowrap">
+              <span class="font-mono text-xs font-bold px-2 py-1 bg-gray-100 text-gray-700 rounded-md">
+                {{ c.numero_dossier }}
+              </span>
+            </td>
+            <!-- Nom et prénom -->
+            <td class="p-4 whitespace-nowrap font-semibold text-gray-900 text-sm">
+              {{ c.nom }} {{ c.prenom }}
+            </td>
+            <!-- Catégorie -->
+            <td class="p-4 whitespace-nowrap">
+              <span class="text-xs font-medium px-2.5 py-0.5 bg-blue-50 text-blue-600 rounded">
+                {{ c.categorie }}
+              </span>
+            </td>
+            <!-- Auto-école -->
+            <td class="p-4 text-sm text-gray-500 whitespace-nowrap">
+              {{ c.auto_ecole.nom }}
+            </td>
+            <!-- Date Inscription -->
+            <td class="p-4 text-xs text-gray-400 whitespace-nowrap">
+              {{ c.date_inscription|date:"d/m/Y" }}
+            </td>
+            <!-- Statut Global -->
+            <td class="p-4 whitespace-nowrap">
+              {% with s=c.statut_global %}
+                {% if 'Permis' in s %}
+                  <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full">● {{ s }}</span>
+                {% elif 'Apte' in s %}
+                  <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full">● {{ s }}</span>
+                {% else %}
+                  <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full">● {{ s }}</span>
+                {% endif %}
+              {% endwith %}
+            </td>
+            <!-- Action -->
+            <td class="p-4 text-right whitespace-nowrap">
+              <a href="{% url 'detail_candidat' c.pk %}" class="inline-flex items-center justify-center text-xs font-bold px-3 py-1.5 bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition shadow-sm">
+                Voir
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="p-12 text-center text-sm text-gray-400">
+              <div class="flex flex-col items-center justify-center">
+                <svg class="w-8 h-8 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>Aucun candidat trouvé.</span>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Méta/Footer du Tableau -->
+    <div class="p-4 bg-gray-50/50 border-t border-gray-100 flex items-center text-xs font-medium text-gray-500">
+      <span>{{ candidats|length }} dossier(s) trouvé(s)</span>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

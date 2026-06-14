@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attestation — {{ candidat.nom }} {{ candidat.prenom }}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      color: #111;
+      background: #e9e9e9;
+      padding: 24px;
+    }
+    .toolbar {
+      max-width: 800px;
+      margin: 0 auto 16px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .toolbar button, .toolbar a {
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background: #fff;
+      cursor: pointer;
+      text-decoration: none;
+      color: #111;
+    }
+    .toolbar .imprimer {
+      background: #111;
+      color: #fff;
+      border-color: #111;
+    }
+    .page {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+      border: 2px solid #111;
+      padding: 28px 36px;
+      min-height: 1050px;
+      position: relative;
+    }
+    .entete {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 30px;
+    }
+    .entete .gauche { font-size: 12px; line-height: 1.5; }
+    .entete .gauche .pays { font-weight: 700; text-decoration: underline; font-size: 13px; }
+    .entete .gauche .devise { font-style: italic; margin-bottom: 6px; }
+    .entete .gauche .min { font-weight: 700; text-decoration: underline; margin-top: 4px; }
+    .entete .gauche .sg { font-weight: 700; text-decoration: underline; }
+    .entete .gauche .dir { font-weight: 700; text-decoration: underline; max-width: 260px; }
+    .photo-box {
+      width: 90px;
+      height: 110px;
+      border: 1px solid #111;
+      flex-shrink: 0;
+    }
+    .lettre { text-align: center; font-weight: 700; font-size: 16px; margin-bottom: 6px; }
+    .titre {
+      text-align: center;
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: .5px;
+      text-decoration: underline;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+    .duplicata {
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 22px;
+    }
+    .frais {
+      font-size: 13px;
+      margin-bottom: 26px;
+    }
+    .frais .label { text-decoration: underline; font-weight: 700; }
+    .intro {
+      font-size: 14px;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+    .champ {
+      font-size: 13.5px;
+      margin-bottom: 14px;
+      line-height: 1.8;
+    }
+    .champ .label { text-decoration: underline; font-weight: 700; }
+    .champ .valeur { font-weight: 400; white-space: nowrap; }
+    .ligne-double {
+      display: flex;
+      justify-content: space-between;
+      gap: 30px;
+    }
+    .ligne-double > div { flex: 1; }
+    .paragraphe {
+      font-size: 14px;
+      line-height: 1.7;
+      margin: 26px 0;
+      text-align: justify;
+    }
+    .validite {
+      text-align: center;
+      font-weight: 700;
+      font-size: 15px;
+      margin: 20px 0 40px;
+      text-decoration: underline;
+    }
+    .signature {
+      text-align: center;
+      margin-top: 10px;
+    }
+    .signature .titre-sign {
+      font-weight: 700;
+      text-decoration: underline;
+      font-size: 14px;
+      margin-bottom: 50px;
+    }
+    .signature .nom-sign {
+      font-weight: 700;
+      text-decoration: underline;
+      font-size: 14px;
+    }
+    .nb {
+      position: absolute;
+      bottom: 24px;
+      left: 36px;
+      right: 36px;
+      font-size: 10.5px;
+      line-height: 1.5;
+      border-top: 1px solid #999;
+      padding-top: 6px;
+    }
+    .nb .label { text-decoration: underline; font-weight: 700; }
+
+    @media print {
+      body { background: #fff; padding: 0; }
+      .toolbar { display: none; }
+      .page { border: none; max-width: none; padding: 30px 40px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="toolbar">
+    <a href="{% url 'liste_attestations' %}">&larr; Retour</a>
+    <button class="imprimer" onclick="window.print()">Imprimer</button>
+  </div>
+
+  <div class="page">
+
+    <div class="entete">
+      <div class="gauche">
+        <div class="pays">REPUBLIQUE DU NIGER</div>
+        <div class="devise">Fraternité - Travail - Progrès</div>
+        <div class="min">MINISTERE DES TRANSPORTS ET DE L'AVIATION CIVILE</div>
+        <div class="sg">SECRETARIAT GENERAL</div>
+        <div class="dir">DIRECTION REGIONALE DES TRANSPORTS ET DE L'AVIATION CIVILE DE NIAMEY</div>
+      </div>
+      <div class="photo-box"></div>
+    </div>
+
+    <div class="lettre">{{ candidat.categorie }}</div>
+    <div class="titre">Attestation Provisoire de Permis de Conduire</div>
+
+    <div class="frais">
+      <span class="label">FRAIS DE TIMBRE PERCUS :</span>&nbsp; 5000 F
+    </div>
+
+    <div class="intro">
+      Je soussignée Madame la Directrice Régionale des Transports et de l'Aviation Civile de Niamey, atteste que :
+    </div>
+
+    <div class="champ"><span class="label">NOM :</span> <span class="valeur">{{ candidat.nom|upper }}</span></div>
+    <div class="champ"><span class="label">PRENOMS :</span> <span class="valeur">{{ candidat.prenom|upper }}</span></div>
+
+    <div class="champ ligne-double">
+      <div><span class="label">DATE ET LIEU DE NAISSANCE :</span> <span class="valeur">{{ candidat.date_naissance|date:"d/m/Y" }}</span></div>
+      <div><span class="label">A :</span> <span class="valeur">{{ candidat.lieu_naissance|upper }}</span></div>
+    </div>
+
+    <div class="champ">
+      <span class="label">EST TITULAIRE DU PERMIS DE CONDUIRE N° :</span>
+      <span class="valeur">{{ candidat.numero_permis }}</span>
+      &nbsp;&nbsp;&nbsp;
+      <span class="label">DELIVRE LE :</span>
+      <span class="valeur">{{ date_delivrance|date:"d/m/Y" }}</span>
+    </div>
+
+    <div class="champ">
+      <span class="label">A :</span> <span class="valeur">NIAMEY</span>
+      &nbsp;&nbsp;&nbsp;
+      <span class="label">ET VALABLE POUR LA OU LES CATEGORIE(S) :</span>
+      <span class="valeur">{{ candidat.categorie }}</span>
+    </div>
+
+    <div class="paragraphe">
+      La présente attestation lui permettant de conduire, est délivrée en attendant l'établissement de son permis
+      de conduire biométrique, est valable un (01) mois et non renouvelable à compter du :
+    </div>
+
+    <div class="validite">{{ date_delivrance|date:"d/m/Y" }}</div>
+
+    <div class="signature">
+      <div class="titre-sign">LA DIRECTRICE REGIONALE</div>
+      <div class="nom-sign">Mme BARIRA ALKALI SANI HALILOU</div>
+    </div>
+
+    <div class="nb">
+      <span class="label">N.B</span> : La présente attestation n'est valable que si elle est signée par la Directrice Régionale des
+      Transports et de l'Aviation Civile de Niamey.<br>
+      Direction Régionale des Transports et de l'Aviation Civile, sise au quartier Terminus sur l'Avenue du Grand Hôtel, ruelle allant du commissariat central au Grand Hôtel.
+    </div>
+
+  </div>
+
+</body>
+</html>
