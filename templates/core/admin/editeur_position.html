@@ -1,0 +1,139 @@
+{% extends 'core/base.html' %}
+{% block title %}Positionnement — {{ label }}{% endblock %}
+{% block topbar_title %}Positionnement des champs — {{ label }}{% endblock %}
+{% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="p-4 sm:p-6 max-w-6xl mx-auto text-gray-800 antialiased space-y-4">
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <a href="{% url 'parametres_impression' %}" class="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800">
+      <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Retour aux paramètres
+    </a>
+    <div class="flex gap-2">
+      <a href="{% url 'test_impression' type_fiche %}" target="_blank"
+         class="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-700 transition shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimer un test
+      </a>
+    </div>
+  </div>
+
+  <div class="bg-amber-50 border border-amber-100 rounded-2xl p-3 text-xs text-amber-800">
+    📌 Faites glisser chaque étiquette à l'endroit exact où l'information doit apparaître sur votre papier.
+    La position s'enregistre automatiquement. La feuille représente une page A4 (21 x 29,7 cm).
+  </div>
+
+  <div class="flex flex-col lg:flex-row gap-5">
+
+    <!-- Aperçu A4 avec champs déplaçables -->
+    <div class="flex-1 flex justify-center overflow-x-auto">
+      <div id="feuille" class="relative bg-white border-2 border-dashed border-gray-300 shadow-sm flex-shrink-0"
+           style="width: 420px; height: 594px; max-width: 100%;">
+        <!-- Grille de repère tous les 10mm (échelle: 420px = 210mm -> 2px/mm) -->
+        <div class="absolute inset-0 pointer-events-none"
+             style="background-image: repeating-linear-gradient(to bottom, transparent, transparent 19px, #f3f4f6 19px, #f3f4f6 20px), repeating-linear-gradient(to right, transparent, transparent 19px, #f3f4f6 19px, #f3f4f6 20px);">
+        </div>
+
+        {% for p in positions %}
+        <div class="champ-drag absolute cursor-move bg-blue-600 text-white text-xs font-semibold px-2 py-1 rounded shadow select-none whitespace-nowrap {% if not p.visible %}opacity-30{% endif %}"
+             data-champ="{{ p.champ }}"
+             data-pk="{{ p.pk }}"
+             style="left: {{ p.x_mm|floatformat:0 }}mm; top: {{ p.y_mm|floatformat:0 }}mm; font-size: {{ p.taille_police }}px; transform: scale(0.85);">
+          {{ p.label }}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Liste des champs avec réglages fins -->
+    <div class="w-full lg:w-80 space-y-3">
+      <h3 class="text-sm font-bold text-gray-900">Réglages fins</h3>
+      {% for p in positions %}
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-3">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-semibold text-gray-700">{{ p.label }}</span>
+          <span class="text-xs text-gray-400 font-mono" id="coords-{{ p.champ }}">{{ p.x_mm|floatformat:0 }}, {{ p.y_mm|floatformat:0 }}mm</span>
+        </div>
+        <form method="post" action="{% url 'modifier_champ_position' p.pk %}" class="flex items-center gap-2">
+          {% csrf_token %}
+          <input type="number" name="taille_police" value="{{ p.taille_police }}" min="6" max="30"
+                 class="w-16 px-2 py-1 text-xs border border-gray-200 rounded-lg" title="Taille police (pt)">
+          <label class="flex items-center gap-1 text-xs text-gray-500">
+            <input type="checkbox" name="visible" value="1" {% if p.visible %}checked{% endif %} class="accent-blue-600">
+            Visible
+          </label>
+          <button type="submit" class="text-xs font-semibold px-2 py-1 bg-gray-900 text-white rounded-lg">OK</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const feuille = document.getElementById('feuille');
+const MM_PER_PX = 210 / 420; // largeur A4 en mm / largeur feuille en px
+
+document.querySelectorAll('.champ-drag').forEach(el => {
+  el.addEventListener('mousedown', startDrag);
+  el.addEventListener('touchstart', startDrag, {passive: false});
+});
+
+function startDrag(e) {
+  e.preventDefault();
+  const el = e.currentTarget;
+  const rectFeuille = feuille.getBoundingClientRect();
+  const rectEl = el.getBoundingClientRect();
+
+  const point = e.touches ? e.touches[0] : e;
+  const offsetX = point.clientX - rectEl.left;
+  const offsetY = point.clientY - rectEl.top;
+
+  function onMove(ev) {
+    const p = ev.touches ? ev.touches[0] : ev;
+    let x = p.clientX - rectFeuille.left - offsetX;
+    let y = p.clientY - rectFeuille.top - offsetY;
+    x = Math.max(0, Math.min(x, rectFeuille.width - 20));
+    y = Math.max(0, Math.min(y, rectFeuille.height - 20));
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+  }
+
+  function onEnd() {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onEnd);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend', onEnd);
+
+    const xPx = parseFloat(el.style.left);
+    const yPx = parseFloat(el.style.top);
+    const xMm = Math.round(xPx * MM_PER_PX);
+    const yMm = Math.round(yPx * MM_PER_PX);
+
+    const champ = el.dataset.champ;
+    const coordsLabel = document.getElementById('coords-' + champ);
+    if (coordsLabel) coordsLabel.textContent = xMm + ', ' + yMm + 'mm';
+
+    fetch(`{% url 'sauvegarder_positions' type_fiche %}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: `champ=${champ}&x_mm=${xMm}&y_mm=${yMm}`
+    });
+  }
+
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onEnd);
+  document.addEventListener('touchmove', onMove, {passive: false});
+  document.addEventListener('touchend', onEnd);
+}
+</script>
+{% endblock %}

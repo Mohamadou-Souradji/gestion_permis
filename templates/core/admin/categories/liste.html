@@ -1,0 +1,51 @@
+{% extends 'core/base.html' %}
+{% block title %}Catégories de permis{% endblock %}
+{% block topbar_title %}Gestion des catégories de permis{% endblock %}
+{% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
+<div class="p-6 max-w-3xl mx-auto text-gray-800 antialiased">
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="p-5 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+      <div>
+        <h3 class="font-bold text-gray-900 text-xl">Catégories de permis</h3>
+        <p class="text-xs text-gray-500 mt-0.5">Ces catégories s'affichent dans les formulaires de saisie.</p>
+      </div>
+      <a href="{% url 'creer_categorie' %}" class="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-700 transition shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nouvelle catégorie
+      </a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead><tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+          <th class="px-5 py-3 text-left font-semibold">Code</th>
+          <th class="px-5 py-3 text-left font-semibold">Libellé</th>
+          <th class="px-5 py-3 text-left font-semibold">Statut</th>
+          <th class="px-5 py-3 text-right font-semibold"></th>
+        </tr></thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for cat in categories %}
+          <tr class="hover:bg-gray-50/60">
+            <td class="px-5 py-3 font-bold font-mono">{{ cat.code }}</td>
+            <td class="px-5 py-3 text-gray-500">{{ cat.libelle|default:"—" }}</td>
+            <td class="px-5 py-3">
+              {% if cat.actif %}<span class="inline-block px-2 py-0.5 bg-green-50 text-green-700 text-xs font-bold rounded uppercase">Active</span>
+              {% else %}<span class="inline-block px-2 py-0.5 bg-red-50 text-red-700 text-xs font-bold rounded uppercase">Inactive</span>{% endif %}
+            </td>
+            <td class="px-5 py-3 text-right">
+              <a href="{% url 'toggle_categorie' cat.pk %}"
+                 class="text-xs font-semibold px-3 py-1.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition"
+                 onclick="return confirm('{% if cat.actif %}Désactiver{% else %}Activer{% endif %} cette catégorie ?')">
+                {% if cat.actif %}Désactiver{% else %}Activer{% endif %}
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="px-5 py-12 text-center text-gray-400">Aucune catégorie. Cliquez "Nouvelle catégorie" pour commencer.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
