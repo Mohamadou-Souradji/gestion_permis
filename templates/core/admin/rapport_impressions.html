@@ -1,0 +1,243 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Rapport Impressions{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <!-- HEADER -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1>📊 Rapport d'Impressions</h1>
+            <p class="text-muted">Audit complet de toutes les impressions effectuées par les agents</p>
+        </div>
+    </div>
+
+    <!-- STATISTIQUES -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3>{{ stats.total }}</h3>
+                    <p class="text-muted">Total impressions</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-success">
+                <div class="card-body text-center text-success">
+                    <h3>{{ stats.reussites }}</h3>
+                    <p class="text-muted">Réussites</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-danger">
+                <div class="card-body text-center text-danger">
+                    <h3>{{ stats.erreurs }}</h3>
+                    <p class="text-muted">Erreurs</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTRES -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <strong>🔍 Filtres</strong>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Agent</label>
+                    <select name="agent" class="form-select">
+                        <option value="">-- Tous --</option>
+                        {% for agent in agents %}
+                            <option value="{{ agent.pk }}" {% if request.GET.agent|slugify == agent.pk|slugify %}selected{% endif %}>
+                                {{ agent.user.get_full_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Type</label>
+                    <select name="type_fiche" class="form-select">
+                        <option value="">-- Tous --</option>
+                        <option value="fiche_controle" {% if request.GET.type_fiche == 'fiche_controle' %}selected{% endif %}>Fiche contrôle</option>
+                        <option value="fiche_examen_code" {% if request.GET.type_fiche == 'fiche_examen_code' %}selected{% endif %}>Fiche examen code</option>
+                        <option value="fiche_examen_conduite" {% if request.GET.type_fiche == 'fiche_examen_conduite' %}selected{% endif %}>Fiche examen conduite</option>
+                        <option value="attestation" {% if request.GET.type_fiche == 'attestation' %}selected{% endif %}>Attestation</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Statut</label>
+                    <select name="statut" class="form-select">
+                        <option value="">-- Tous --</option>
+                        <option value="succes" {% if request.GET.statut == 'succes' %}selected{% endif %}>✓ Succès</option>
+                        <option value="erreur" {% if request.GET.statut == 'erreur' %}selected{% endif %}>✗ Erreur</option>
+                        <option value="annule" {% if request.GET.statut == 'annule' %}selected{% endif %}>Annulé</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        🔍 Filtrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TABLEAU IMPRESSIONS -->
+    <div class="card">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <strong>📋 Détail des impressions</strong>
+            <a href="{% url 'export_journal_impression' %}" class="btn btn-sm btn-outline-light">
+                📥 Export CSV
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date/Heure</th>
+                        <th>Agent</th>
+                        <th>Type</th>
+                        <th>Candidat</th>
+                        <th>Copies</th>
+                        <th>Imprimante</th>
+                        <th>Statut</th>
+                        <th>IP</th>
+                        <th>Détails</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for imp in impressions %}
+                        <tr>
+                            <td>
+                                <small>
+                                    {{ imp.date_impression|date:"d/m/Y H:i:s" }}
+                                </small>
+                            </td>
+                            <td>
+                                {% if imp.agent %}
+                                    <strong>{{ imp.agent.user.get_full_name }}</strong>
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-info">
+                                    {{ imp.get_type_fiche_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if imp.candidat %}
+                                    {{ imp.candidat.numero_dossier }} - {{ imp.candidat.nom }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ imp.nombre_copies }}</td>
+                            <td>
+                                <small>{{ imp.imprimante|truncatechars:20 }}</small>
+                            </td>
+                            <td>
+                                {% if imp.statut == "succes" %}
+                                    <span class="badge bg-success">✓ Succès</span>
+                                {% elif imp.statut == "erreur" %}
+                                    <span class="badge bg-danger">✗ Erreur</span>
+                                {% elif imp.statut == "annule" %}
+                                    <span class="badge bg-secondary">○ Annulé</span>
+                                {% else %}
+                                    <span class="badge bg-warning">⏱ {{ imp.get_statut_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="font-monospace">{{ imp.adresse_ip }}</small>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#details-{{ imp.pk }}">
+                                    Voir
+                                </button>
+                            </td>
+                        </tr>
+                        <!-- Détails collapsibles -->
+                        <tr class="collapse" id="details-{{ imp.pk }}">
+                            <td colspan="9">
+                                <div class="p-3">
+                                    <h6>Détails complets:</h6>
+                                    <dl class="row small">
+                                        <dt class="col-sm-3">User-Agent:</dt>
+                                        <dd class="col-sm-9"><code>{{ imp.user_agent|truncatewords:10 }}</code></dd>
+                                        
+                                        <dt class="col-sm-3">Format papier:</dt>
+                                        <dd class="col-sm-9">{{ imp.format_papier }} - {{ imp.orientation }} - {% if imp.couleur %}Couleur{% else %}N&B{% endif %}</dd>
+                                        
+                                        <dt class="col-sm-3">Hash document:</dt>
+                                        <dd class="col-sm-9"><code>{{ imp.hash_document|truncatechars:40 }}</code></dd>
+                                        
+                                        <dt class="col-sm-3">Message erreur:</dt>
+                                        <dd class="col-sm-9">
+                                            {% if imp.message_erreur %}
+                                                <span class="text-danger">{{ imp.message_erreur }}</span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </dd>
+                                        
+                                        <dt class="col-sm-3">Paramètres appliqués:</dt>
+                                        <dd class="col-sm-9">
+                                            <pre><code>{{ imp.parametres_appliques|safe }}</code></pre>
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted p-4">
+                                Aucune impression trouvée avec ces filtres.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PAGINATION -->
+        {% if impressions|length >= 1000 %}
+        <div class="card-footer">
+            <small class="text-muted">Affichage: {{ impressions|length }} impressions (limité à 1000)</small>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- AIDE -->
+    <div class="alert alert-info mt-4">
+        <h6>💡 Comment lire ce rapport?</h6>
+        <ul class="mb-0">
+            <li><strong>Date/Heure:</strong> Quand l'impression a eu lieu</li>
+            <li><strong>Agent:</strong> Qui a demandé l'impression</li>
+            <li><strong>Type:</strong> Quel document a été imprimé</li>
+            <li><strong>Candidat:</strong> Pour quel candidat</li>
+            <li><strong>Statut:</strong> Si l'impression a réussi ou échoué</li>
+            <li><strong>IP:</strong> D'où venait la demande</li>
+            <li><strong>Détails:</strong> Configuration complète appliquée (JSON)</li>
+        </ul>
+    </div>
+</div>
+
+<style>
+    .font-monospace {
+        font-family: 'Courier New', monospace;
+    }
+    
+    pre code {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}

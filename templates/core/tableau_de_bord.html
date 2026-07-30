@@ -1,0 +1,219 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Tableau de bord{% endblock %}
+{% block topbar_title %}Tableau de bord{% endblock %}
+
+{% block content %}
+<!-- CDN Tailwind CSS pour la fluidité et le design moderne -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="p-6 max-w-7xl mx-auto space-y-8 text-gray-800 antialiased">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-100 pb-6">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight text-gray-900">Tableau de bord</h1>
+            <p class="text-sm text-gray-500 mt-1">Suivi en temps réel des candidats, examens et permis de conduire.</p>
+        </div>
+        <div class="inline-flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-xl text-sm font-medium text-gray-600 border border-gray-200 shadow-sm self-start md:self-auto">
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            {% now "d F Y" %}
+        </div>
+    </div>
+
+    <!-- Stats Grid (Style Bento Box) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        
+        <!-- Card Candidats -->
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md">Candidats</span>
+                <div class="p-2 bg-blue-50 rounded-lg text-blue-600 group-hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                </div>
+            </div>
+            <div class="mt-4">
+                <span class="text-3xl font-bold tracking-tight">{{ total_candidats }}</span>
+                <p class="text-xs text-gray-400 mt-1">Total des candidats enregistrés</p>
+            </div>
+        </div>
+
+        <!-- Card Examens -->
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-amber-600 bg-amber-50 px-2.5 py-1 rounded-md">Examens</span>
+                <div class="p-2 bg-amber-50 rounded-lg text-amber-600 group-hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                </div>
+            </div>
+            <div class="mt-4">
+                <span class="text-3xl font-bold tracking-tight">{{ examens_aujourd_hui }}</span>
+                <p class="text-xs text-gray-400 mt-1">Programmés aujourd'hui</p>
+            </div>
+        </div>
+
+        <!-- Card Aptes -->
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-md">Aptes Code</span>
+                <div class="p-2 bg-emerald-50 rounded-lg text-emerald-600 group-hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+            </div>
+            <div class="mt-4">
+                <span class="text-3xl font-bold tracking-tight">{{ aptes_code }}</span>
+                <p class="text-xs text-gray-400 mt-1">Déclarés aptes au code</p>
+            </div>
+        </div>
+
+        <!-- Card Permis -->
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-purple-600 bg-purple-50 px-2.5 py-1 rounded-md">Permis</span>
+                <div class="p-2 bg-purple-50 rounded-lg text-purple-600 group-hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 014 0m-3 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </div>
+            </div>
+            <div class="mt-4">
+                <span class="text-3xl font-bold tracking-tight">{{ permis_delivres }}</span>
+                <p class="text-xs text-gray-400 mt-1">Permis de conduire délivrés</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Grid (Tables) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+        <!-- Section Examens Code -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+            <div class="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                <div>
+                    <h3 class="font-bold text-gray-900 text-lg">Examens Code</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Sessions prévues aujourd'hui</p>
+                </div>
+                <a href="{% url 'examens_code_jour' %}" class="inline-flex items-center justify-center text-xs font-semibold px-3 py-2 bg-white text-blue-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition shadow-sm">
+                    Voir tout
+                </a>
+            </div>
+
+            {% if examens_code_aujourd_hui %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <th class="p-4 text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100">Dossier</th>
+                        <th class="p-4 text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100">Candidat</th>
+                        <th class="p-4 text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100">Cat.</th>
+                        <th class="p-4 text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100 text-right">Résultat</th>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for e in examens_code_aujourd_hui %}
+                        <tr class="hover:bg-gray-50/70 transition-colors">
+                            <td class="p-4">
+                                <span class="inline-font font-mono text-xs font-bold px-2 py-1 bg-gray-100 text-gray-700 rounded-md">
+                                    {{ e.candidat.numero_dossier }}
+                                </span>
+                            </td>
+                            <td class="p-4">
+                                <div class="font-semibold text-gray-900 text-sm">{{ e.candidat.nom }}</div>
+                                <div class="text-xs text-gray-400">{{ e.candidat.prenom }}</div>
+                            </td>
+                            <td class="p-4">
+                                <span class="text-xs font-medium px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                                    {{ e.candidat.categorie }}
+                                </span>
+                            </td>
+                            <td class="p-4 text-right">
+                                {% if e.resultat == 'APTE' %}
+                                    <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full">● Apte</span>
+                                {% elif e.resultat == 'INAPTE' %}
+                                    <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 bg-rose-50 text-rose-700 rounded-full">● Inapte</span>
+                                {% elif e.resultat == 'ABSENT' %}
+                                    <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full">● Absent</span>
+                                {% else %}
+                                    <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full animate-pulse">● En attente</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-12 text-center flex-1 flex flex-col items-center justify-center">
+                <div class="p-3 bg-gray-50 rounded-full text-gray-400 mb-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0V9a2 2 0 00-2-2H6a2 2 0 00-2 2v4.5m12 3.5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                </div>
+                <h4 class="text-sm font-semibold text-gray-900">Aucun examen code</h4>
+                <p class="text-xs text-gray-400 mt-1">Aucune session n'est programmée aujourd'hui.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Section Examens Conduite -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+            <div class="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                <div>
+                    <h3 class="font-bold text-gray-900 text-lg">Examens Conduite</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Sessions prévues aujourd'hui</p>
+                </div>
+                <a href="{% url 'examens_conduite_jour' %}" class="inline-flex items-center justify-center text-xs font-semibold px-3 py-2 bg-white text-blue-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition shadow-sm">
+                    Voir tout
+                </a>
+            </div>
+
+            {% if examens_conduite_aujourd_hui %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <th class="p-4 text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100">Dossier</th>
+                        <th class="p-4 text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100">Candidat</th>
+                        <th class="p-4 text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100">Cat.</th>
+                        <th class="p-4 text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100 text-right">Résultat</th>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for e in examens_conduite_aujourd_hui %}
+                        <tr class="hover:bg-gray-50/70 transition-colors">
+                            <td class="p-4">
+                                <span class="inline-font font-mono text-xs font-bold px-2 py-1 bg-gray-100 text-gray-700 rounded-md">
+                                    {{ e.candidat.numero_dossier }}
+                                </span>
+                            </td>
+                            <td class="p-4">
+                                <div class="font-semibold text-gray-900 text-sm">{{ e.candidat.nom }}</div>
+                                <div class="text-xs text-gray-400">{{ e.candidat.prenom }}</div>
+                            </td>
+                            <td class="p-4">
+                                <span class="text-xs font-medium px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                                    {{ e.candidat.categorie }}
+                                </span>
+                            </td>
+                            <td class="p-4 text-right">
+                                {% if e.resultat == 'APTE' %}
+                                    <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full">● Apte</span>
+                                {% elif e.resultat == 'INAPTE' %}
+                                    <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 bg-rose-50 text-rose-700 rounded-full">● Inapte</span>
+                                {% elif e.resultat == 'ABSENT' %}
+                                    <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full">● Absent</span>
+                                {% else %}
+                                    <span class="inline-flex items-center text-xs font-semibold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full animate-pulse">● En attente</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-12 text-center flex-1 flex flex-col items-center justify-center">
+                <div class="p-3 bg-gray-50 rounded-full text-gray-400 mb-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2m-9-2V5m0 14H4a2 2 0 01-2-2V5a2 2 0 012-2h8a2 2 0 012 2v14a2 2 0 01-2 2z"></path></svg>
+                </div>
+                <h4 class="text-sm font-semibold text-gray-900">Aucun examen conduite</h4>
+                <p class="text-xs text-gray-400 mt-1">Aucune session n'est programmée aujourd'hui.</p>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

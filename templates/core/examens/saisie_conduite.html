@@ -1,0 +1,75 @@
+{% extends 'core/base.html' %}
+{% block title %}Saisie conduite{% endblock %}
+{% block topbar_title %}Saisie résultat — Conduite{% endblock %}
+{% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
+<div class="p-6 max-w-lg mx-auto text-gray-800 antialiased space-y-4">
+  <a href="{% url 'examens_conduite_jour' %}" class="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800">
+    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Retour
+  </a>
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+    <div class="text-lg font-bold">{{ examen.candidat.nom }} {{ examen.candidat.prenom }}</div>
+    <div class="text-xs text-gray-400 mt-0.5">{{ examen.candidat.numero_dossier }} · Cat. {{ examen.candidat.categorie }} · {{ examen.candidat.auto_ecole.nom }}</div>
+  </div>
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+    <h3 class="font-bold text-gray-900 mb-4">Résultat examen conduite</h3>
+    <form method="post" id="form-conduite">
+      {% csrf_token %}
+      <div class="mb-4">
+        <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Date examen</label>
+        <input type="date" name="date_examen" value="{{ examen.date_examen|date:'Y-m-d' }}"
+               class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500">
+      </div>
+      <div class="mb-4">
+        <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Examinateur</label>
+        <select name="examinateur" class="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500">
+          <option value="">-- Sélectionner --</option>
+          {% for ex in examinateurs %}<option value="{{ ex.pk }}" {% if examen.examinateur_id == ex.pk %}selected{% endif %}>{{ ex }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="mb-5">
+        <label class="block text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">Résultat *</label>
+        <div class="grid grid-cols-2 gap-2">
+          {% for val, label in examen.RESULTAT_CHOICES %}{% if val != 'EN_ATTENTE' %}
+          <label class="flex items-center gap-2 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 has-[:checked]:border-gray-900 has-[:checked]:bg-gray-50">
+            <input type="radio" name="resultat" value="{{ val }}" {% if examen.resultat == val %}checked{% endif %} class="accent-gray-900" onchange="toggleReprog()">
+            <span class="text-sm font-medium">{{ label }}</span>
+          </label>
+          {% endif %}{% endfor %}
+        </div>
+      </div>
+
+      <!-- Reprogrammation si non apte -->
+      <div id="section-reprog" class="hidden mb-5 p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3">
+        <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Reprogrammer la conduite</p>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Nouvelle date</label>
+          <input type="date" name="date_reprog" class="w-full px-3 py-2 bg-white border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Examinateur (nouvelle session)</label>
+          <select name="examinateur_reprog" class="w-full px-3 py-2 bg-white border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500">
+            <option value="">-- Optionnel --</option>
+            {% for ex in examinateurs %}<option value="{{ ex.pk }}">{{ ex }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="submit" class="flex-1 text-sm font-semibold px-4 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-700 transition">Enregistrer</button>
+        <a href="{% url 'examens_conduite_jour' %}" class="text-sm font-medium px-4 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function toggleReprog() {
+  const val = document.querySelector('input[name="resultat"]:checked')?.value;
+  const show = val && val !== 'APTE';
+  document.getElementById('section-reprog').classList.toggle('hidden', !show);
+}
+toggleReprog();
+</script>
+{% endblock %}

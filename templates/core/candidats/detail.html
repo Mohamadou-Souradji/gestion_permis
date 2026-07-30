@@ -1,0 +1,318 @@
+{% extends 'core/base.html' %}
+{% block title %}{{ candidat.numero_dossier }}{% endblock %}
+{% block topbar_title %}Dossier {{ candidat.numero_dossier }}{% endblock %}
+{% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
+<div class="p-6 max-w-6xl mx-auto text-gray-800 antialiased space-y-5">
+
+  <div class="flex items-center justify-between">
+    <a href="{% url 'liste_candidats' %}" class="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800">
+      <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Retour à la liste
+    </a>
+    <div class="flex gap-2">
+      <button onclick="document.getElementById('modal-modifier').style.display='flex'"
+              class="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 1 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Modifier
+      </button>
+      <a href="{% url 'imprimer_fiche_controle' candidat.pk %}" target="_blank"
+         class="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Fiche contrôle
+      </a>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+
+    <!-- Fiche identité -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div class="flex items-start justify-between mb-3">
+        <div>
+          <div class="text-2xl font-bold text-gray-900">{{ candidat.nom }} {{ candidat.prenom }}</div>
+          <div class="text-xs text-gray-400 mt-0.5">{{ candidat.get_sexe_display }} · {{ candidat.date_naissance|date:"d/m/Y" }} à {{ candidat.lieu_naissance }}</div>
+        </div>
+        <span class="inline-block px-2 py-0.5 bg-gray-100 text-gray-700 text-xs font-bold rounded">{{ candidat.categorie }}</span>
+      </div>
+      <table class="w-full text-sm mt-3">
+        <tr><td class="text-gray-400 py-1 pr-3 w-2/5">N° Dossier</td><td class="font-mono font-bold">{{ candidat.numero_dossier }}</td></tr>
+        <tr><td class="text-gray-400 py-1">Téléphone</td><td>{{ candidat.telephone|default:"—" }}</td></tr>
+        <tr><td class="text-gray-400 py-1">Auto-école</td><td>{{ candidat.auto_ecole.nom }}</td></tr>
+        <tr><td class="text-gray-400 py-1">Inscription</td><td>{{ candidat.date_inscription|date:"d/m/Y" }}</td></tr>
+        {% if candidat.est_ancien_dossier %}<tr><td colspan="2"><span class="inline-block mt-1 px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-semibold rounded">Ancien dossier migré</span></td></tr>{% endif %}
+      </table>
+      <div class="mt-4 pt-3 border-t border-gray-100">
+        <div class="text-xs text-gray-400 mb-1 uppercase tracking-wide font-semibold">Statut global</div>
+        {% with s=candidat.statut_global %}
+          {% if 'Permis' in s %}<span class="inline-block px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg">{{ s }}</span>
+          {% elif 'Apte' in s %}<span class="inline-block px-3 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-lg">{{ s }}</span>
+          {% else %}<span class="inline-block px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg">{{ s }}</span>{% endif %}
+        {% endwith %}
+      </div>
+    </div>
+
+    <!-- Examens -->
+    <div class="lg:col-span-2 space-y-5">
+
+      <!-- Examen Code -->
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+          <span class="font-bold text-gray-900">Examens Code</span>
+          <div class="flex gap-2">
+            {% with dernier=candidat.dernier_examen_code %}
+            {% if not dernier %}
+            <!-- Pas de code du tout : programmer -->
+            <button onclick="document.getElementById('modal-prog-code').style.display='flex'"
+                    class="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 bg-gray-900 text-white rounded-xl hover:bg-gray-700 transition">
+              + Programmer code
+            </button>
+            {% elif dernier.resultat == 'INAPTE' or dernier.resultat == 'ABSENT' %}
+            <!-- INAPTE ou ABSENT : reprogrammer -->
+            <button onclick="document.getElementById('modal-reprog-code').style.display='flex'"
+                    class="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition">
+              Reprogrammer code
+            </button>
+            {% elif dernier.resultat == 'EN_ATTENTE' %}
+            <span class="text-xs text-blue-600 font-semibold px-3 py-1.5 bg-blue-50 rounded-xl">Code programmé</span>
+            {% endif %}
+            {% endwith %}
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead><tr class="bg-gray-50 text-gray-500 text-xs uppercase">
+              <th class="px-4 py-2 text-left">Date</th><th class="px-4 py-2 text-left">Note /25</th>
+              <th class="px-4 py-2 text-left">Résultat</th><th class="px-4 py-2 text-right">Modifier date</th>
+            </tr></thead>
+            <tbody class="divide-y divide-gray-100">
+              {% for e in candidat.examens_code.all %}
+              <tr class="hover:bg-gray-50/50">
+                <td class="px-4 py-2 font-medium">{{ e.date_examen|date:"d/m/Y" }}</td>
+                <td class="px-4 py-2">{% if e.note is not None %}<strong>{{ e.note }}</strong>/25{% else %}—{% endif %}</td>
+                <td class="px-4 py-2">
+                  {% if e.resultat == 'APTE' %}<span class="inline-block px-2 py-0.5 bg-green-50 text-green-700 text-xs font-bold rounded uppercase">Apte</span>
+                  {% elif e.resultat == 'INAPTE' %}<span class="inline-block px-2 py-0.5 bg-red-50 text-red-700 text-xs font-bold rounded uppercase">Inapte</span>
+                  {% elif e.resultat == 'ABSENT' %}<span class="inline-block px-2 py-0.5 bg-orange-50 text-orange-700 text-xs font-bold rounded uppercase">Absent</span>
+                  {% else %}<span class="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-bold rounded uppercase">En attente</span>{% endif %}
+                </td>
+                <td class="px-4 py-2 text-right">
+                  {% if e.resultat == 'EN_ATTENTE' %}
+                  <form method="post" action="{% url 'modifier_date_examen_code' e.pk %}" class="inline-flex items-center gap-1">
+                    {% csrf_token %}
+                    <input type="date" name="nouvelle_date" value="{{ e.date_examen|date:'Y-m-d' }}" class="text-xs px-2 py-1 border border-gray-200 rounded-lg">
+                    <button type="submit" class="text-xs px-2 py-1 bg-gray-900 text-white rounded-lg">OK</button>
+                  </form>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Aucun examen code. Cliquez "Programmer code" pour planifier.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Examen Conduite -->
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+          <span class="font-bold text-gray-900">Examens Conduite</span>
+          {% with dernier_code=candidat.dernier_examen_code dernier_conduite=candidat.dernier_examen_conduite %}
+          {% if dernier_code.resultat == 'APTE' and not candidat.est_apte_complet %}
+            {% if not dernier_conduite or dernier_conduite.resultat != 'EN_ATTENTE' %}
+            <button onclick="document.getElementById('modal-conduite').style.display='flex'"
+                    class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-gray-900 text-white rounded-xl hover:bg-gray-700 transition">
+              + Programmer conduite
+            </button>
+            {% else %}
+            <span class="text-xs text-blue-600 font-semibold px-3 py-1.5 bg-blue-50 rounded-xl">Conduite programmée</span>
+            {% endif %}
+          {% elif candidat.est_apte_complet %}
+            <span class="text-xs text-green-700 font-semibold px-3 py-1.5 bg-green-50 rounded-xl">Apte — permis délivré</span>
+          {% endif %}
+          {% endwith %}
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead><tr class="bg-gray-50 text-gray-500 text-xs uppercase">
+              <th class="px-4 py-2 text-left">Date</th><th class="px-4 py-2 text-left">Examinateur</th>
+              <th class="px-4 py-2 text-left">Résultat</th><th class="px-4 py-2 text-right">Modifier</th>
+            </tr></thead>
+            <tbody class="divide-y divide-gray-100">
+              {% for e in candidat.examens_conduite.all %}
+              <tr class="hover:bg-gray-50/50">
+                <td class="px-4 py-2 font-medium">{{ e.date_examen|date:"d/m/Y" }}</td>
+                <td class="px-4 py-2 text-xs text-gray-500">{{ e.examinateur|default:"—" }}</td>
+                <td class="px-4 py-2">
+                  {% if e.resultat == 'APTE' %}<span class="inline-block px-2 py-0.5 bg-green-50 text-green-700 text-xs font-bold rounded uppercase">Apte</span>
+                  {% elif e.resultat == 'INAPTE' %}<span class="inline-block px-2 py-0.5 bg-red-50 text-red-700 text-xs font-bold rounded uppercase">Inapte</span>
+                  {% elif e.resultat == 'ABSENT' %}<span class="inline-block px-2 py-0.5 bg-orange-50 text-orange-700 text-xs font-bold rounded uppercase">Absent</span>
+                  {% elif e.resultat == 'REPROGRAMME' %}<span class="inline-block px-2 py-0.5 bg-purple-50 text-purple-700 text-xs font-bold rounded uppercase">Reprogrammé</span>
+                  {% else %}<span class="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-bold rounded uppercase">En attente</span>{% endif %}
+                </td>
+                <td class="px-4 py-2 text-right">
+                  {% if e.resultat == 'EN_ATTENTE' %}
+                  <form method="post" action="{% url 'modifier_date_examen_conduite' e.pk %}" class="inline-flex items-center gap-1">
+                    {% csrf_token %}
+                    <input type="date" name="nouvelle_date" value="{{ e.date_examen|date:'Y-m-d' }}" class="text-xs px-2 py-1 border border-gray-200 rounded-lg">
+                    <select name="examinateur" class="text-xs px-2 py-1 border border-gray-200 rounded-lg">
+                      <option value="">Exam.</option>
+                      {% for ex in examinateurs %}<option value="{{ ex.pk }}" {% if e.examinateur_id == ex.pk %}selected{% endif %}>{{ ex }}</option>{% endfor %}
+                    </select>
+                    <button type="submit" class="text-xs px-2 py-1 bg-gray-900 text-white rounded-lg">OK</button>
+                  </form>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">
+                {% if candidat.dernier_examen_code.resultat == 'APTE' %}Cliquez "Programmer conduite".{% else %}Disponible après l'admission au code.{% endif %}
+              </td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if candidat.est_apte_complet %}
+        <div class="p-4 border-t border-gray-100">
+          <a href="{% url 'imprimer_attestation' candidat.pk %}" target="_blank"
+             class="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 bg-green-700 text-white rounded-xl hover:bg-green-800 transition shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Imprimer l'attestation
+          </a>
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODALS ═══════════════════════════════════════════════════════════════ -->
+
+<!-- Modal Modifier candidat -->
+<div id="modal-modifier" class="fixed inset-0 bg-black/50 items-center justify-center z-50 overflow-y-auto" style="display:none;">
+  <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-2xl mx-4 my-8">
+    <h3 class="font-bold text-gray-900 text-lg mb-4">Modifier le dossier {{ candidat.numero_dossier }}</h3>
+    <form method="post" action="{% url 'modifier_candidat' candidat.pk %}">
+      {% csrf_token %}
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1 uppercase">Nom *</label>
+          <input type="text" name="nom" value="{{ candidat.nom }}" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1 uppercase">Prénom *</label>
+          <input type="text" name="prenom" value="{{ candidat.prenom }}" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1 uppercase">Date de naissance *</label>
+          <input type="date" name="date_naissance" value="{{ candidat.date_naissance|date:'Y-m-d' }}" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1 uppercase">Lieu de naissance *</label>
+          <input type="text" name="lieu_naissance" value="{{ candidat.lieu_naissance }}" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1 uppercase">Sexe</label>
+          <select name="sexe" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500">
+            <option value="M" {% if candidat.sexe == 'M' %}selected{% endif %}>Masculin</option>
+            <option value="F" {% if candidat.sexe == 'F' %}selected{% endif %}>Féminin</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1 uppercase">Téléphone</label>
+          <input type="tel" name="telephone" value="{{ candidat.telephone }}" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1 uppercase">Catégorie</label>
+          <select name="categorie" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500">
+            {% for val, label in candidat.CATEGORIE_CHOICES %}
+            <option value="{{ val }}" {% if candidat.categorie == val %}selected{% endif %}>Cat. {{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1 uppercase">Auto-école</label>
+          <select name="auto_ecole" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500">
+            {% for ae in auto_ecoles %}
+            <option value="{{ ae.pk }}" {% if candidat.auto_ecole_id == ae.pk %}selected{% endif %}>{{ ae.nom }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button type="submit" class="flex-1 text-sm font-semibold px-4 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-700 transition">Enregistrer</button>
+        <button type="button" onclick="document.getElementById('modal-modifier').style.display='none'" class="text-sm font-medium px-4 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition">Annuler</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Programmer code (ancien dossier sans code) -->
+<div id="modal-prog-code" class="fixed inset-0 bg-black/50 items-center justify-center z-50" style="display:none;">
+  <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4">
+    <h3 class="font-bold text-gray-900 text-lg mb-4">Programmer l'examen code</h3>
+    <form method="post" action="{% url 'programmer_code' candidat.pk %}">
+      {% csrf_token %}
+      <div class="mb-5">
+        <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase">Date *</label>
+        <input type="date" name="date_code" required class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500">
+      </div>
+      <div class="flex gap-2">
+        <button type="submit" class="flex-1 text-sm font-semibold px-4 py-2.5 bg-gray-900 text-white rounded-xl">Confirmer</button>
+        <button type="button" onclick="document.getElementById('modal-prog-code').style.display='none'" class="text-sm font-medium px-4 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-xl">Annuler</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Reprogrammer code (INAPTE/ABSENT) -->
+<div id="modal-reprog-code" class="fixed inset-0 bg-black/50 items-center justify-center z-50" style="display:none;">
+  <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4">
+    <h3 class="font-bold text-gray-900 text-lg mb-1">Reprogrammer l'examen code</h3>
+    {% with dernier=candidat.dernier_examen_code %}
+    {% if dernier.resultat == 'INAPTE' %}
+    <p class="text-xs text-orange-600 mb-4">Délai minimum 7 jours après le {{ dernier.date_examen|date:"d/m/Y" }}.</p>
+    {% endif %}
+    {% endwith %}
+    <form method="post" action="{% url 'reprogrammer_code' candidat.pk %}">
+      {% csrf_token %}
+      <div class="mb-5">
+        <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase">Nouvelle date *</label>
+        <input type="date" name="date_reprog_code" required class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500">
+      </div>
+      <div class="flex gap-2">
+        <button type="submit" class="flex-1 text-sm font-semibold px-4 py-2.5 bg-orange-600 text-white rounded-xl">Reprogrammer</button>
+        <button type="button" onclick="document.getElementById('modal-reprog-code').style.display='none'" class="text-sm font-medium px-4 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-xl">Annuler</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal programmer conduite -->
+<div id="modal-conduite" class="fixed inset-0 bg-black/50 items-center justify-center z-50" style="display:none;">
+  <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4">
+    <h3 class="font-bold text-gray-900 text-lg mb-4">Programmer l'examen conduite</h3>
+    <form method="post" action="{% url 'programmer_conduite' candidat.pk %}">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase">Date *</label>
+        <input type="date" name="date_conduite" required class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500">
+      </div>
+      <div class="mb-5">
+        <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase">Examinateur</label>
+        <select name="examinateur" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500">
+          <option value="">-- Optionnel --</option>
+          {% for ex in examinateurs %}<option value="{{ ex.pk }}">{{ ex }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="flex gap-2">
+        <button type="submit" class="flex-1 text-sm font-semibold px-4 py-2.5 bg-gray-900 text-white rounded-xl">Confirmer</button>
+        <button type="button" onclick="document.getElementById('modal-conduite').style.display='none'" class="text-sm font-medium px-4 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-xl">Annuler</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

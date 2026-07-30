@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Espace Candidat — SGPC</title>
+  {% load static %}
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body style="font-family:'Inter',sans-serif;" class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-14 h-14 bg-gray-900 rounded-2xl mb-4">
+        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/>
+          <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+        </svg>
+      </div>
+      <h1 class="text-xl font-bold text-gray-900">Espace Candidat</h1>
+      <p class="text-xs text-gray-400 mt-1">Direction Régionale des Transports et de l'Aviation Civile de Niamey</p>
+    </div>
+
+    {% if messages %}
+      {% for msg in messages %}
+      <div class="bg-red-50 border border-red-100 text-red-700 text-sm px-4 py-3 rounded-xl mb-4">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">N° de dossier</label>
+          <input type="text" name="numero_dossier" required placeholder="Ex : 1042" autofocus
+                 class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500 font-mono">
+        </div>
+        <button type="submit" class="w-full text-sm font-semibold px-4 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-700 transition">
+          Voir mes résultats
+        </button>
+      </form>
+    </div>
+    <p class="text-center text-xs text-gray-400 mt-6">
+      Utilisez le numéro de dossier communiqué lors de votre inscription.
+    </p>
+  </div>
+</body>
+</html>

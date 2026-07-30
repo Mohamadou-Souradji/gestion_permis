@@ -1,0 +1,49 @@
+{% extends 'core/base.html' %}
+{% block title %}Auto-écoles{% endblock %}
+{% block topbar_title %}Gestion des auto-écoles{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Auto-écoles enregistrées</span>
+    <a href="{% url 'creer_auto_ecole' %}" class="btn btn-primary btn-sm">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Nouvelle auto-école
+    </a>
+  </div>
+  <form method="get" class="search-bar">
+    <div class="search-input-wrap">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" name="q" value="{{ q }}" placeholder="Nom ou responsable...">
+    </div>
+    <button type="submit" class="btn btn-secondary btn-sm">Rechercher</button>
+  </form>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Nom</th><th>Responsable</th><th>Téléphone</th><th>Email</th><th>Candidats</th><th>Statut</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for ae in auto_ecoles %}
+        <tr>
+          <td style="font-weight:600;">{{ ae.nom }}</td>
+          <td>{{ ae.responsable|default:"—" }}</td>
+          <td style="font-size:12px;color:#666;">{{ ae.telephone|default:"—" }}</td>
+          <td style="font-size:12px;color:#666;">{{ ae.email|default:"—" }}</td>
+          <td style="font-weight:600;">{{ ae.nb_candidats }}</td>
+          <td>{% if ae.actif %}<span class="badge badge-apte">Active</span>
+              {% else %}<span class="badge badge-inapte">Inactive</span>{% endif %}</td>
+          <td><a href="{% url 'modifier_auto_ecole' ae.pk %}" class="btn btn-secondary btn-sm">Modifier</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" style="text-align:center;color:#999;padding:32px;">Aucune auto-école.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

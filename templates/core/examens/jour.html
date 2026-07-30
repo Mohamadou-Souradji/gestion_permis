@@ -1,0 +1,81 @@
+{% extends 'core/base.html' %}
+{% block title %}Examens {{ type_examen|title }}{% endblock %}
+{% block topbar_title %}Examens — {{ jour|date:"l d F Y" }}{% endblock %}
+{% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
+<div class="p-6 max-w-5xl mx-auto space-y-5 text-gray-800 antialiased">
+  <div class="flex items-center gap-2">
+    <a href="{% url 'examens_code_jour' %}{% if jour != aujourd_hui %}?date={{ jour|date:'Y-m-d' }}{% endif %}"
+       class="px-4 py-2 text-sm font-semibold rounded-xl transition {% if type_examen == 'code' %}bg-gray-900 text-white{% else %}bg-white text-gray-600 border border-gray-200 hover:bg-gray-50{% endif %}">
+      Examen Code
+    </a>
+    <a href="{% url 'examens_conduite_jour' %}{% if jour != aujourd_hui %}?date={{ jour|date:'Y-m-d' }}{% endif %}"
+       class="px-4 py-2 text-sm font-semibold rounded-xl transition {% if type_examen == 'conduite' %}bg-gray-900 text-white{% else %}bg-white text-gray-600 border border-gray-200 hover:bg-gray-50{% endif %}">
+      Examen Conduite
+    </a>
+  </div>
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="p-5 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div>
+        <h3 class="font-bold text-gray-900 text-xl">{% if type_examen == 'code' %}Examens Code{% else %}Examens Conduite{% endif %}</h3>
+        <p class="text-xs text-gray-500 mt-0.5">{{ examens|length }} candidat(s) programmé(s).</p>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <form method="get" class="flex items-center gap-2">
+          <input type="date" name="date" value="{{ jour|date:'Y-m-d' }}"
+                 class="px-3 py-2 bg-gray-50 border border-gray-200 text-sm rounded-xl focus:outline-none focus:border-blue-500">
+          <button type="submit" class="text-sm font-semibold px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition">Afficher</button>
+          {% if jour == aujourd_hui %}<span class="text-xs font-semibold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md">Aujourd'hui</span>{% endif %}
+        </form>
+        <a href="{% url 'imprimer_liste_examens' type_examen %}?date={{ jour|date:'Y-m-d' }}" target="_blank"
+           class="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-700 transition shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Imprimer la liste
+        </a>
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead><tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+          <th class="px-5 py-3 text-left font-semibold">N° Dossier</th>
+          <th class="px-5 py-3 text-left font-semibold">Candidat</th>
+          <th class="px-5 py-3 text-left font-semibold">Cat.</th>
+          <th class="px-5 py-3 text-left font-semibold">Auto-école</th>
+          {% if type_examen == 'conduite' %}<th class="px-5 py-3 text-left font-semibold">Examinateur</th>{% endif %}
+          <th class="px-5 py-3 text-left font-semibold">Statut</th>
+          <th class="px-5 py-3 text-right font-semibold"></th>
+        </tr></thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for e in examens %}
+          <tr class="hover:bg-gray-50/60 transition-colors">
+            <td class="px-5 py-3 font-mono font-semibold text-gray-900">{{ e.candidat.numero_dossier }}</td>
+            <td class="px-5 py-3 font-medium">{{ e.candidat.nom }} {{ e.candidat.prenom }}</td>
+            <td class="px-5 py-3"><span class="inline-block px-2 py-0.5 bg-gray-100 text-gray-700 text-xs font-semibold rounded">{{ e.candidat.categorie }}</span></td>
+            <td class="px-5 py-3 text-gray-500 text-xs">{{ e.candidat.auto_ecole.nom }}</td>
+            {% if type_examen == 'conduite' %}<td class="px-5 py-3 text-xs text-gray-500">{{ e.examinateur|default:"—" }}</td>{% endif %}
+            <td class="px-5 py-3">
+              {% if e.resultat == 'APTE' %}<span class="inline-block px-2 py-0.5 bg-green-50 text-green-700 text-xs font-semibold rounded uppercase">Apte</span>
+              {% elif e.resultat == 'INAPTE' %}<span class="inline-block px-2 py-0.5 bg-red-50 text-red-700 text-xs font-semibold rounded uppercase">Inapte</span>
+              {% elif e.resultat == 'ABSENT' %}<span class="inline-block px-2 py-0.5 bg-orange-50 text-orange-700 text-xs font-semibold rounded uppercase">Absent</span>
+              {% elif e.resultat == 'REPROGRAMME' %}<span class="inline-block px-2 py-0.5 bg-purple-50 text-purple-700 text-xs font-semibold rounded uppercase">Reprogrammé</span>
+              {% else %}<span class="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded uppercase">En attente</span>{% endif %}
+            </td>
+            <td class="px-5 py-3 text-right">
+              {% if e.resultat == 'EN_ATTENTE' %}
+                {% if type_examen == 'code' %}
+                <a href="{% url 'saisir_resultat_code' e.pk %}" class="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 bg-gray-900 text-white rounded-xl hover:bg-gray-700 transition shadow-sm">Resultat Code</a>
+                {% else %}
+                <a href="{% url 'saisir_resultat_conduite' e.pk %}" class="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 bg-gray-900 text-white rounded-xl hover:bg-gray-700 transition shadow-sm">Resultat Conduite</a>
+                {% endif %}
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="{% if type_examen == 'conduite' %}7{% else %}6{% endif %}" class="px-5 py-14 text-center text-gray-400">Aucun examen {{ type_examen }} programmé ce jour.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

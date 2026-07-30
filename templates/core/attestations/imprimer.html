@@ -1,0 +1,141 @@
+{% extends 'core/base.html' %}
+{% load core_extras %}
+{% block title %}Attestation — {{ candidat.nom }} {{ candidat.prenom }}{% endblock %}
+{% block topbar_title %}Attestation — {{ candidat.nom }} {{ candidat.prenom }}{% endblock %}
+
+{% block content %}
+<style>
+  .page { width: 794px; height: 1123px; margin: 0 auto; background: white; position: relative; box-shadow: 0 0 8px rgba(0,0,0,.15); font-family: 'Times New Roman', Times, serif; }
+  .champ { position: absolute; font-weight: 700; white-space: nowrap; }
+  .qr-box { position: absolute; text-align: center; }
+  .qr-box img { width: 106px; height: 106px; display: block; border: 1px solid #ddd; }
+  .qr-box .qr-label { font-size: 8px; color: #666; margin-top: 2px; }
+  .info { max-width: 794px; margin: 0 auto 12px; background: #e3f2fd; border: 1px solid #90caf9; padding: 10px 14px; font-size: 11px; color: #0d47a1; border-radius: 4px; }
+  .toolbar { max-width: 794px; margin: 0 auto 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .toolbar button, .toolbar a { font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 5px; border: 1px solid #ccc; background: #fff; cursor: pointer; text-decoration: none; color: #111; }
+  .toolbar .btn-print { background: #111; color: #fff; border-color: #111; }
+  .mode-toggle { display: flex; gap: 6px; }
+  .mode-toggle button { font-size: 11px; padding: 5px 10px; }
+  .mode-toggle .active { background: #1565c0; color: white; border-color: #1565c0; }
+
+  /* MODE DOCUMENT COMPLET */
+  .page-full { border: 2px solid #111; padding: 28px 36px; box-sizing: border-box; }
+  .entete { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+  .entete .gauche { font-size: 11px; line-height: 1.6; }
+  .entete .gauche .pays { font-weight: 700; text-decoration: underline; font-size: 12px; }
+  .entete .gauche .devise { font-style: italic; }
+  .entete .gauche .min { font-weight: 700; text-decoration: underline; }
+  .photo-box { width: 80px; height: 100px; border: 1px solid #111; flex-shrink: 0; }
+  .titre { text-align: center; font-weight: 700; font-size: 20px; text-decoration: underline; text-transform: uppercase; margin: 16px 0 8px; }
+  .frais { font-size: 13px; margin-bottom: 20px; }
+  .frais span { text-decoration: underline; font-weight: 700; }
+  .intro { font-size: 13px; margin-bottom: 18px; }
+  .champ-full { font-size: 13px; margin-bottom: 12px; }
+  .champ-full .label { text-decoration: underline; font-weight: 700; }
+  .paragraphe { font-size: 13px; line-height: 1.7; margin: 20px 0; text-align: justify; }
+  .validite { text-align: center; font-weight: 700; font-size: 14px; margin: 16px 0 36px; text-decoration: underline; }
+  .signature { text-align: center; }
+  .signature .titre-sign { font-weight: 700; text-decoration: underline; font-size: 13px; margin-bottom: 44px; }
+  .signature .nom-sign { font-weight: 700; font-size: 13px; }
+  .nb { position: absolute; bottom: 60px; left: 36px; right: 130px; font-size: 10px; line-height: 1.5; border-top: 1px solid #999; padding-top: 5px; }
+  .nb span { text-decoration: underline; font-weight: 700; }
+  .qr-full-pos { position: absolute; bottom: 20px; right: 36px; text-align: center; }
+  .qr-full-pos img { width: 113px; height: 113px; display: block; border: 1px solid #ddd; }
+  .qr-full-pos .qr-label { font-size: 9px; color: #666; margin-top: 3px; }
+
+  @media print {
+    body { background: white; }
+    .info, .toolbar, nav, header { display: none !important; }
+    .page { width: 210mm; height: 297mm; box-shadow: none; }
+  }
+</style>
+
+<div class="info">
+  Mode : <strong id="mode-label">Données seulement (papier pré-imprimé)</strong>
+  {% if not qr_data_uri %}<br><strong style="color:#c0392b;">QR code non disponible (module qrcode manquant).</strong>{% endif %}
+</div>
+
+<div class="toolbar">
+  <div class="mode-toggle">
+    <button id="btn-data" class="active" onclick="setMode('data')">Données seulement</button>
+    <button id="btn-full" onclick="setMode('full')">Document complet</button>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <a href="{% url 'liste_attestations' %}">← Retour</a>
+    <a href="{% url 'editeur_position' 'attestation' %}">Positions</a>
+    <button class="btn-print" onclick="window.print()">Imprimer</button>
+  </div>
+</div>
+
+<!-- MODE DONNÉES -->
+<div id="mode-data">
+  <div class="page">
+    {% for p in positions %}
+      {% if p.champ != 'qr_code' %}
+      <div class="champ" style="left: {{ p.x_px }}px; top: {{ p.y_px }}px; font-size: {{ p.taille_police }}pt;">
+        {{ valeurs|get_item:p.champ }}
+      </div>
+      {% elif qr_data_uri %}
+      <div class="qr-box" style="left: {{ p.x_px }}px; top: {{ p.y_px }}px;">
+        <img src="{{ qr_data_uri }}" alt="QR vérification">
+        <div class="qr-label">Scanner pour vérifier</div>
+      </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+
+<!-- MODE DOCUMENT COMPLET -->
+<div id="mode-full" style="display:none;">
+  <div class="page page-full">
+    <div class="entete">
+      <div class="gauche">
+        <div class="pays">REPUBLIQUE DU NIGER</div>
+        <div class="devise">Fraternité - Travail - Progrès</div>
+        <div class="min">MINISTERE DES TRANSPORTS ET DE L'AVIATION CIVILE</div>
+        <div class="min">SECRETARIAT GENERAL</div>
+        <div class="min">DIRECTION REGIONALE DES TRANSPORTS ET DE L'AVIATION CIVILE DE NIAMEY</div>
+      </div>
+      <div class="photo-box"></div>
+    </div>
+    <div class="titre">Attestation Provisoire de Permis de Conduire</div>
+    <div class="frais"><span>FRAIS PERCUS</span> : quittance : 2 000 CFA</div>
+    <div class="intro">Je soussignée Madame la Directrice Régionale des Transports et de l'Aviation Civile, atteste que :</div>
+    <div class="champ-full"><span class="label">NOMS :</span> {{ candidat.nom|upper }}</div>
+    <div class="champ-full"><span class="label">PRENOM :</span> {{ candidat.prenom }}</div>
+    <div class="champ-full"><span class="label">DATE ET LIEU DE NAISSANCE :</span> {{ candidat.date_naissance|date:"d/m/Y" }} &nbsp; <span class="label">A :</span> {{ candidat.lieu_naissance|upper }}</div>
+    <div class="champ-full">
+      <span class="label">TITULAIRE DU DOSSIER N° :</span> {{ candidat.numero_dossier }}
+      a subi avec succès les épreuves du permis de conduire de la ou des catégorie(s) <strong>{{ candidat.categorie }}</strong>
+    </div>
+    <div class="paragraphe">La présente attestation lui permettant de conduire, est délivrée en attendant l'établissement de son permis de conduire biométrique, est valable un (01) mois et non renouvelable à compter du :</div>
+    <div class="validite">{{ date_delivrance|date:"d/m/Y" }}</div>
+    <div class="signature">
+      <div class="titre-sign">LA DIRECTRICE REGIONALE</div>
+      <div class="nom-sign">Mme BARIRA ALKALI SANI HALILOU</div>
+    </div>
+    <div class="nb">
+      <span>N.B</span> : La présente attestation n'est valable que si elle est signée par la Directrice Régionale des Transports et de l'Aviation Civile de Niamey.<br>
+      Direction Régionale des Transports et de l'Aviation Civile, sise au quartier Terminus sur l'Avenue du Grand Hôtel.
+    </div>
+    {% if qr_data_uri %}
+    <div class="qr-full-pos">
+      <img src="{{ qr_data_uri }}" alt="QR vérification">
+      <div class="qr-label">Scanner pour vérifier</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+function setMode(mode) {
+  document.getElementById('mode-data').style.display = mode === 'data' ? 'block' : 'none';
+  document.getElementById('mode-full').style.display = mode === 'full' ? 'block' : 'none';
+  document.getElementById('btn-data').classList.toggle('active', mode === 'data');
+  document.getElementById('btn-full').classList.toggle('active', mode === 'full');
+  document.getElementById('mode-label').textContent = mode === 'data'
+    ? 'Données seulement (papier pré-imprimé)'
+    : 'Document complet (feuille blanche)';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'core/base.html' %}
+{% load core_extras %}
+{% block title %}Fiche examen code{% if candidat %} — {{ candidat.numero_dossier }}{% endif %}{% endblock %}
+{% block topbar_title %}Fiche examen code{% endblock %}
+
+{% block content %}
+<style>
+  .page { width: 794px; height: 1123px; margin: 0 auto; background: white; position: relative; box-shadow: 0 0 8px rgba(0,0,0,.15); }
+  .champ { position: absolute; font-family: 'Times New Roman', Times, serif; font-weight: 700; white-space: nowrap; }
+  .info { max-width: 794px; margin: 0 auto 12px; background: #fffbeb; border: 1px solid #fde68a; padding: 10px 14px; font-size: 11px; color: #92400e; border-radius: 4px; }
+  .toolbar { max-width: 794px; margin: 0 auto 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .toolbar button, .toolbar a { font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 5px; border: 1px solid #ccc; background: #fff; cursor: pointer; text-decoration: none; color: #111; }
+  .toolbar .btn-print { background: #111; color: #fff; border-color: #111; }
+  .search-form input { padding: 6px 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px; width: 140px; }
+  .search-form button { padding: 6px 14px; border-radius: 5px; border: 1px solid #333; background: #333; color: white; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .not-found { max-width: 794px; margin: 0 auto; background: white; padding: 30px; text-align: center; color: #999; border: 1px dashed #ddd; border-radius: 8px; }
+  @media print {
+    body { background: white; }
+    .info, .toolbar, nav, header { display: none !important; }
+    .page { width: 210mm; height: 297mm; box-shadow: none; }
+  }
+</style>
+
+{% if candidat %}<div class="info">Insérez le papier pré-imprimé "Fiche d'examen théorique" avant d'imprimer.</div>{% endif %}
+<div class="toolbar">
+  <div class="search-form">
+    <form method="get" style="display:flex;gap:6px;">
+      <input type="text" name="numero" value="{{ numero }}" placeholder="N° dossier" autofocus>
+      <button type="submit">Rechercher</button>
+    </form>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <a href="javascript:history.back()">← Retour</a>
+    {% if candidat %}<button class="btn-print" onclick="window.print()">Imprimer</button>{% endif %}
+  </div>
+</div>
+
+{% if numero and not candidat %}
+  <div class="not-found">Aucun candidat trouvé avec le N° dossier <strong>{{ numero }}</strong>.</div>
+{% elif candidat %}
+  <div class="page">
+    {% for p in positions %}
+      <div class="champ" style="left: {{ p.x_px }}px; top: {{ p.y_px }}px; font-size: {{ p.taille_police }}pt;">
+        {{ valeurs|get_item:p.champ }}
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="not-found">Saisissez un numéro de dossier pour afficher les données à imprimer.</div>
+{% endif %}
+{% endblock %}
